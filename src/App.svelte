@@ -13,6 +13,7 @@
     'Tsundere', 'Yandere', 'Raito', 'Yami', 'Yato' ]
 
     let image = "https://sanakan.pl/i/ss/fga432a.png";
+    let customBorder = "";
     let showStats = false;
 
     let starCntComp = 0;
@@ -32,7 +33,7 @@
       {#each borders as value}<option {value}>{value}</option>{/each}
     </select></label>
 
-    <label>Dere: <select id="dere-select" bind:value={selectedDere} >
+    <label>&nbsp;&nbsp;Dere: <select id="dere-select" bind:value={selectedDere} >
       {#each deres as value}<option {value}>{value}</option>{/each}
     </select></label>
   </div>
@@ -42,26 +43,32 @@
   </div>
 
   <div class="selector">
-    <label>Link do obrazka: <input id="url-scalp" bind:value={image} placeholder={image} /> </label>
+    <label>Link do obrazka: <input id="url-scalp" bind:value={image} /> </label>
+    <label>Link do ramki:&nbsp;&nbsp;&nbsp;&nbsp; <input id="url-scalp" bind:value={customBorder} /> </label>
     <label>Pokaż statystyki: <input id="show-stats" type="checkbox" bind:checked={showStats} /> </label>
   </div>
 
   <div class="looks">
       <img src={cardboard} class="scalp" alt="Cardboard" />
       <img src={image} class="scalp" alt="Scalpel" />
-      <img src="/borders/{selectedBorder}.png" class="border" alt="Border" />
-      <img src="/dere/{selectedDere}.png" class="dere" alt="Dere" />
+      {#if customBorder}
+        <img src={customBorder} class="border" alt="Border" />
+      {:else}
+        <img src="/borders/{selectedBorder}.png" class="border" alt="Border" />
+        <img src="/dere/{selectedDere}.png" class="dere" alt="Dere" />
 
-      {#if showStats}
-        <img src={def} class="scalp" alt="Defense" />
-        <img src={fire} class="scalp" alt="Attack" />
-        <img src={health} class="scalp" alt="Health" />
-      {/if}
+        {#if showStats}
+          <img src={def} class="scalp" alt="Defense" />
+          <img src={fire} class="scalp" alt="Attack" />
+          <img src={health} class="scalp" alt="Health" />
+        {/if}
 
-      {#if starCntComp > 0}
-        {#each {length: starCntComp} as _, i}
-          <img src={selectedStarComp} class="star" alt="Star" style="left: {239 - (18 * starCntComp) + (36 * i)}px;"/>
-        {/each}
+        {#if starCntComp > 0}
+          {#each {length: starCntComp} as _, i}
+            <img src={selectedStarComp} class="star" alt="Star" style="left: {239 - (18 * starCntComp) + (36 * i)}px;"/>
+          {/each}
+        {/if}
+
       {/if}
   </div>
 
@@ -75,6 +82,8 @@
   }
   .looks {
     position: relative;
+    width: 475px;
+    height: 667px;
   }
   .scalp {
     position: absolute;
@@ -96,6 +105,7 @@
     left: 0px;
   }
   .selector {
+    width: 475px;
     padding-bottom: 1em;
   }
   .logo:hover {

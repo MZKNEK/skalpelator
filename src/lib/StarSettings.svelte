@@ -19,10 +19,10 @@
   {#each starCount as value}<option {value}>{value}</option>{/each}
 </select></label>
 
-<label>Kolor: <select bind:value={starColor} on:change={() => selectedValue = `/star/${starType}/${starColor}.png` }>
+<label>&nbsp;&nbsp;Kolor: <select bind:value={starColor} on:change={() => selectedValue = `/star/${starType}/${starColor}.png` }>
   {#each starColors as value}<option {value}>{value}</option>{/each}
 </select></label>
 
-<label>Typ: <select bind:value={starType} on:change={() => selectedValue = `/star/${starType}/${starColor}.png` }>
+<label>&nbsp;&nbsp;Typ: <select bind:value={starType} on:change={() => selectedValue = `/star/${starType}/${starColor}.png` }>
   {#each starTypes as value}<option {value}>{value}</option>{/each}
 </select></label>
