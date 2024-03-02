@@ -7,6 +7,24 @@ const createImage = (url) =>
     image.src = url
   })
 
+export async function getMirroredImg(imageSrc) {
+  const image = await createImage(imageSrc)
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+
+  canvas.width = image.width
+  canvas.height = image.height
+
+  ctx.scale(-1, 1)
+  ctx.drawImage(image, 0, 0, image.width * -1, image.height)
+
+  return new Promise((resolve) => {
+    canvas.toBlob((file) => {
+      resolve(URL.createObjectURL(file))
+    }, 'image/png')
+  })
+}
+
 export async function getCroppedImg(imageSrc, pixelCrop) {
   const image = await createImage(imageSrc)
   const canvas = document.createElement('canvas')

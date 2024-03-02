@@ -2,7 +2,7 @@
   import Stars from './lib/StarSettings.svelte';
 
   import Cropper from "svelte-easy-crop";
-	import { getCroppedImg } from "./lib/CanvasUtils.js"
+	import { getCroppedImg, getMirroredImg } from "./lib/CanvasUtils.js"
 
   import logo       from '/pwlogo.png'
   import cardboard  from './assets/empty.png'
@@ -20,6 +20,7 @@
   let showStats = false;
   let editMode = false;
   let localImage = false;
+  let mirrorImage = false;
 
   let starCntComp = 0;
   let selectedStarComp;
@@ -39,6 +40,16 @@
       alert("Nie udało się pobrać obrazka, spróbuj z innym lub użyj lokalnego pliku.");
     }
 	}
+
+  async function toMirrorImage() {
+    try {
+      const croppedImage = await getMirroredImg(image);
+      image = croppedImage;
+      localImage = true;
+    } catch (error) {
+      alert("Nie udało się pobrać obrazka, spróbuj z innym lub użyj lokalnego pliku.");
+    }
+  }
 
   function onFileSelected(e) {
   	let imageFile = e.target.files[0];
@@ -61,7 +72,7 @@
 
     borderColor = (pixelCrop.width < 448 || pixelCrop.height < 650) ? "#ff6242" : "#242424";
 
-    const dratio = 446 / 650;
+    const dratio = 448 / 650;
     const nratio = profilePicture.naturalWidth / profilePicture.naturalHeight;
     const mratio = dratio / nratio;
     minzoom = mratio > 1 ? mratio : 1;
@@ -97,6 +108,7 @@
     {/if}
     <label><div class="ltext">Link do ramki:</div> <input bind:value={customBorder} /> </label><br/>
     <label><div class="ltext">Pokaż statystyki:</div> <input type="checkbox" bind:checked={showStats} /> </label><br/>
+    <label class="mirror"><div class="ltext">Odbicie lustrzane:</div> <input type="checkbox" bind:checked={mirrorImage} on:change={() => toMirrorImage()}/> </label><br/>
     <label class="exp"><div class="ltext">Tryb edycji:</div> <input type="checkbox" bind:checked={editMode} on:change={() => borderColor = "#242424"} /> </label><br/>
   </div>
   <div class="looks" style="border-color: {borderColor};" >
@@ -146,7 +158,7 @@
   }
   .ltext {
     display: inline-block;
-    width: 122px;
+    width: 126px;
     text-align: left;
   }
   .stext {
@@ -168,9 +180,6 @@
     margin-left: 16px;
     width: 448px;
     height: 650px;
-    /* width: 475px; */
-    /* height: 667px; */
-    /* margin-bottom: 20em; */
     z-index: 0;
   }
   .cardboard {
@@ -190,6 +199,9 @@
   }
   .editor {
     padding: 0.5em;
+  }
+  .mirror {
+    color: #cf00ff;
   }
   .exp {
     color: #646cff;
