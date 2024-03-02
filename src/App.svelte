@@ -29,11 +29,15 @@
   let pixelCrop, profilePicture, style, borderColor, fileinput;
 
   async function downloadImage() {
-    const croppedImage = await getCroppedImg(image, pixelCrop);
-    const downloadLink = document.createElement("a");
-    downloadLink.href = croppedImage;
-    downloadLink.download = "skalpelek.png";
-    downloadLink.click();
+    try {
+      const croppedImage = await getCroppedImg(image, pixelCrop);
+      const downloadLink = document.createElement("a");
+      downloadLink.href = croppedImage;
+      downloadLink.download = "skalpelek.png";
+      downloadLink.click();
+    } catch (error) {
+      alert("Nie udało się pobrać obrazka, spróbuj z innym lub użyj lokalnego pliku.");
+    }
 	}
 
   function onFileSelected(e) {
@@ -62,7 +66,6 @@
 </script>
 
 <main>
-
   <div>
     <a href="https://sanakan.pl" target="_blank" rel="noreferrer"> <img src={logo} class="logo" alt="Logo" /> </a>
   </div>
@@ -177,6 +180,7 @@
     width: 448px;
     height: 650px;
     overflow: hidden;
+    z-index: -1;
   }
   .editor {
     padding: 0.5em;
