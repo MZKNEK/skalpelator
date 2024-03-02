@@ -26,7 +26,7 @@
   let selectedBorder =  'C';
   let selectedDere = 'Kamidere';
 
-  let pixelCrop, profilePicture, style, borderColor, fileinput;
+  let pixelCrop, profilePicture, style, borderColor, fileinput, minzoom, curzoom;
 
   async function downloadImage() {
     try {
@@ -60,6 +60,12 @@
     const wdn = profilePicture.naturalWidth * scale;
 
     borderColor = (pixelCrop.width < 448 || pixelCrop.height < 650) ? "#ff6242" : "#242424";
+
+    const dratio = 446 / 650;
+    const nratio = profilePicture.naturalWidth / profilePicture.naturalHeight;
+    const mratio = dratio / nratio;
+    minzoom = mratio > 1 ? mratio : 1;
+    curzoom = curzoom < minzoom ? minzoom : curzoom;
 
 		profilePicture.style=`margin: ${hd}px 0 0 ${wd}px; width: ${wdn}px;`
 	}
@@ -127,7 +133,7 @@
     <button type="button" on:click={async () => {downloadImage()}}>Zapisz</button>
   </div>
     <div class="canva">
-      <Cropper {image} crop={{x:0, y:0}} zoom={1} zoomSpeed={0.05} cropSize={{width:448, height:650}} restrictPosition={true} on:cropcomplete={previewCrop} />
+      <Cropper {image} crop={{x:0, y:0}} bind:zoom={curzoom} bind:minZoom={minzoom} maxZoom={5} zoomSpeed={0.05} cropSize={{width:448, height:650}} restrictPosition={true} on:cropcomplete={previewCrop} />
     </div>
   {/if}
 </main>
