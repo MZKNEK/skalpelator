@@ -15,14 +15,22 @@
   export { starCnt as count };
 </script>
 
-<label>Gwiazdki: <select bind:value={starCnt} on:change={() => selectedValue = `/star/${starType}/${starColor}.png` }>
+<label><div class="stext">Gwiazdki:</div> <select class="nselect" bind:value={starCnt} on:change={() => selectedValue = `/star/${starType}/${starColor}.png` }>
   {#each starCount as value}<option {value}>{value}</option>{/each}
 </select></label>
 
-<label>&nbsp;&nbsp;Kolor: <select bind:value={starColor} on:change={() => selectedValue = `/star/${starType}/${starColor}.png` }>
+<label><div class="stext">Kolor:</div> <select class="nselect" bind:value={starColor} on:change={() => selectedValue = `/star/${starType}/${starColor}.png` }>
   {#each starColors as value}<option {value}>{value}</option>{/each}
 </select></label>
 
-<label>&nbsp;&nbsp;Typ: <select bind:value={starType} on:change={() => selectedValue = `/star/${starType}/${starColor}.png` }>
+<label><div class="stext">Typ:</div> <select class="nselect" bind:value={starType} on:change={() => selectedValue = `/star/${starType}/${starColor}.png` }>
   {#each starTypes as value}<option {value}>{value}</option>{/each}
 </select></label>
+
+<style>
+  .stext {
+    display: inline-block;
+    padding-left: 0.5em;
+    padding-right: 0.2em;
+  }
+</style>

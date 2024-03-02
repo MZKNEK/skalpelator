@@ -19,11 +19,14 @@
   let customBorder = "";
   let showStats = false;
   let editMode = false;
+  let localImage = false;
 
   let starCntComp = 0;
   let selectedStarComp;
   let selectedBorder =  'C';
   let selectedDere = 'Kamidere';
+
+  let pixelCrop, profilePicture, style, borderColor, fileinput;
 
   async function downloadImage() {
     const croppedImage = await getCroppedImg(image, pixelCrop);
@@ -33,7 +36,15 @@
     downloadLink.click();
 	}
 
-  let pixelCrop, profilePicture, style, borderColor;
+  function onFileSelected(e) {
+  	let imageFile = e.target.files[0];
+    let reader = new FileReader();
+  	reader.onload = e => {
+      image = e.target.result;
+      localImage = true;
+  	};
+  	reader.readAsDataURL(imageFile);
+  }
 
   function previewCrop(e) {
 		pixelCrop = e.detail.pixels;
@@ -44,11 +55,7 @@
     const wd = -x*scale - 448 / 2;
     const wdn = profilePicture.naturalWidth * scale;
 
-    if (pixelCrop.width < 448 || pixelCrop.height < 650) {
-      borderColor = "#ff6242";
-    } else {
-      borderColor = "#242424";
-    }
+    borderColor = (pixelCrop.width < 448 || pixelCrop.height < 650) ? "#ff6242" : "#242424";
 
 		profilePicture.style=`margin: ${hd}px 0 0 ${wd}px; width: ${wdn}px;`
 	}
@@ -61,11 +68,11 @@
   </div>
 
   <div class="selector">
-    <label>Ramka: <select bind:value={selectedBorder} >
+    <label><div class="stext">Ramka:</div> <select bind:value={selectedBorder} >
       {#each borders as value}<option {value}>{value}</option>{/each}
     </select></label>
 
-    <label>&nbsp;&nbsp;Dere: <select id="dere-select" bind:value={selectedDere} >
+    <label><div class="stext">Dere:</div> <select class="nselect" bind:value={selectedDere} >
       {#each deres as value}<option {value}>{value}</option>{/each}
     </select></label>
   </div>
@@ -75,10 +82,13 @@
   </div>
 
   <div class="selector">
-    <label>Link do obrazka: <input bind:value={image} /> </label>
-    <label>Link do ramki:&nbsp;&nbsp;&nbsp;&nbsp; <input bind:value={customBorder} /> </label>
-    <label>Pokaż statystyki: <input type="checkbox" bind:checked={showStats} /> </label>
-    <label class="exp">Tryb edycji(wip): <input type="checkbox" bind:checked={editMode} on:change={() => borderColor = "#242424"} /> </label>
+    <label><div class="ltext">Lokalny plik:</div><input type="file" accept=".jpg, .jpeg, .png" on:change={(e)=>onFileSelected(e)} bind:this={fileinput} ></label><br/>
+    {#if !localImage}
+      <label><div class="ltext">Link do obrazka:</div> <input bind:value={image} /> </label><br/>
+    {/if}
+    <label><div class="ltext">Link do ramki:</div> <input bind:value={customBorder} /> </label><br/>
+    <label><div class="ltext">Pokaż statystyki:</div> <input type="checkbox" bind:checked={showStats} /> </label><br/>
+    <label class="exp"><div class="ltext">Tryb edycji:</div> <input type="checkbox" bind:checked={editMode} on:change={() => borderColor = "#242424"} /> </label><br/>
   </div>
   <div class="looks" style="border-color: {borderColor};" >
     <img src={cardboard} class="cardboard" alt="Cardboard" />
@@ -110,11 +120,11 @@
       {/if}
   </div>
   {#if editMode}
-  <div style="padding: 0.5em;">
+  <div class="editor">
     <button type="button" on:click={async () => {downloadImage()}}>Zapisz</button>
   </div>
     <div class="canva">
-      <Cropper {image} crop={{x:0, y:0}} zoom={1} zoomSpeed={0.2} cropSize={{width:448, height:650}} restrictPosition={true} on:cropcomplete={previewCrop} />
+      <Cropper {image} crop={{x:0, y:0}} zoom={1} zoomSpeed={0.05} cropSize={{width:448, height:650}} restrictPosition={true} on:cropcomplete={previewCrop} />
     </div>
   {/if}
 </main>
@@ -125,6 +135,16 @@
     will-change: filter;
     transition: filter 300ms;
   }
+  .ltext {
+    display: inline-block;
+    width: 122px;
+    text-align: left;
+  }
+  .stext {
+    display: inline-block;
+    padding-left: 0.5em;
+    padding-right: 0.2em;
+  }
   .looks {
     position: relative;
     width: 475px;
@@ -134,12 +154,19 @@
     border-style: solid;
   }
   .canva {
-    position: absolute;
-    width: 475px;
-    height: 667px;
+    position: relative;
+    margin-top: -712px;
+    margin-left: 16px;
+    width: 448px;
+    height: 650px;
+    /* width: 475px; */
+    /* height: 667px; */
+    /* margin-bottom: 20em; */
+    z-index: 0;
   }
   .cardboard {
     position: absolute;
+    pointer-events: none;
     top: 13px;
     left: 13px;
   }
@@ -151,8 +178,11 @@
     height: 650px;
     overflow: hidden;
   }
+  .editor {
+    padding: 0.5em;
+  }
   .exp {
-    color: #ff6242;
+    color: #646cff;
   }
   .wrapper_img {
     position: absolute;
@@ -163,17 +193,24 @@
     left: 13px;
     width: 448px;
     height: auto;
+    pointer-events: none;
     clip-path: xywh(0 0 100% 650px);
   }
   .border {
     position: relative;
+    pointer-events: none;
+    z-index: 1;
   }
   .star {
     position: absolute;
+    pointer-events: none;
+    z-index: 3;
     top: 30px;
   }
   .stats {
     position: absolute;
+    pointer-events: none;
+    z-index: 3;
     top: 0px;
     left: 0px;
   }
