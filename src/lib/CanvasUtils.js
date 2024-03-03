@@ -11,6 +11,7 @@ export async function getMirroredImg(imageSrc) {
   const image = await createImage(imageSrc)
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
+  ctx.imageSmoothingEnabled = false
 
   canvas.width = image.width
   canvas.height = image.height
@@ -29,6 +30,7 @@ export async function getCroppedImg(imageSrc, pixelCrop) {
   const image = await createImage(imageSrc)
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
+  ctx.imageSmoothingEnabled = false
 
   canvas.width = pixelCrop.width
   canvas.height = pixelCrop.height
@@ -49,6 +51,7 @@ export async function getResizedImg(imageSrc, width, height) {
   const image = await createImage(imageSrc)
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
+  ctx.imageSmoothingEnabled = false
 
   canvas.width = width
   canvas.height = height

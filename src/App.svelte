@@ -59,6 +59,9 @@
       localImage = true;
   	};
   	reader.readAsDataURL(imageFile);
+    editMode = false;
+    minzoom = 1;
+    curzoom = 1;
   }
 
   function previewCrop(e) {
@@ -117,6 +120,9 @@
       <div class="wrapper">
         <img bind:this={profilePicture} src={image} class="wrapper_img" alt="Scalpel" style={style}/>
       </div>
+      <div class="canva">
+        <Cropper {image} showGrid={false} crop={{x:0, y:0}} bind:zoom={curzoom} bind:minZoom={minzoom} maxZoom={5} zoomSpeed={0.05} cropSize={{width:448, height:650}} restrictPosition={true} on:cropcomplete={previewCrop} />
+      </div>
     {:else}
       <img src={image} class="scalp" alt="Scalpel" />
     {/if}
@@ -144,9 +150,6 @@
   <div class="editor">
     <button type="button" on:click={async () => {downloadImage()}}>Zapisz</button>
   </div>
-    <div class="canva">
-      <Cropper {image} crop={{x:0, y:0}} bind:zoom={curzoom} bind:minZoom={minzoom} maxZoom={5} zoomSpeed={0.05} cropSize={{width:448, height:650}} restrictPosition={true} on:cropcomplete={previewCrop} />
-    </div>
   {/if}
 </main>
 
@@ -175,11 +178,11 @@
     border-style: solid;
   }
   .canva {
-    position: relative;
-    margin-top: -712px;
-    margin-left: 16px;
+    position: absolute;
     width: 448px;
     height: 650px;
+    top: 13px;
+    left: 13px;
     z-index: 0;
   }
   .cardboard {
