@@ -73,7 +73,7 @@
     const wd = -x*scale - 448 / 2;
     const wdn = profilePicture.naturalWidth * scale;
 
-    borderColor = (pixelCrop.width < 448 || pixelCrop.height < 650) ? "#ff6242" : "#242424";
+    borderColor = (pixelCrop.width < 448 || pixelCrop.height < 650) ? "#ff6242" : "";
 
     const dratio = 448 / 650;
     const nratio = profilePicture.naturalWidth / profilePicture.naturalHeight;
@@ -112,7 +112,7 @@
     <label><div class="ltext">Link do ramki:</div> <input bind:value={customBorder} /> </label><br/>
     <label><div class="ltext">Pokaż statystyki:</div> <input type="checkbox" bind:checked={showStats} /> </label><br/>
     <label class="mirror"><div class="ltext">Odbicie lustrzane:</div> <input type="checkbox" bind:checked={mirrorImage} on:change={() => toMirrorImage()}/> </label><br/>
-    <label class="exp"><div class="ltext">Tryb edycji:</div> <input type="checkbox" bind:checked={editMode} on:change={() => borderColor = "#242424"} /> </label><br/>
+    <label class="exp"><div class="ltext">Tryb edycji:</div> <input type="checkbox" bind:checked={editMode} on:change={() => borderColor = ""} /> </label><br/>
   </div>
   <div class="looks" style="border-color: {borderColor};" >
     <img src={cardboard} class="cardboard" alt="Cardboard" />
@@ -161,7 +161,7 @@
   }
   .ltext {
     display: inline-block;
-    width: 126px;
+    width: 130px;
     text-align: left;
   }
   .stext {
@@ -173,9 +173,6 @@
     position: relative;
     width: 475px;
     height: 667px;
-    border: 3px;
-    border-color: #242424;
-    border-style: solid;
   }
   .canva {
     position: absolute;
@@ -202,12 +199,6 @@
   }
   .editor {
     padding: 0.5em;
-  }
-  .mirror {
-    color: #cf00ff;
-  }
-  .exp {
-    color: #646cff;
   }
   .wrapper_img {
     position: absolute;
@@ -242,8 +233,5 @@
   .selector {
     width: 475px;
     padding-bottom: 1em;
-  }
-  .logo:hover {
-    filter: drop-shadow(0 0 2em #646cffaa);
   }
 </style>
