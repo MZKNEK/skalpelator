@@ -128,6 +128,28 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.dropzone {
+  border: 2px dashed #5c5c5c;
+  border-radius: 8px;
+  padding: 0.75em 1em;
+  background: #1a1a1a;
+  color: #f2e8df;
+  transition: background 150ms, border-color 150ms;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.dropzone.dragover {
+  background: #111827;
+  border-color: #3b82f6;
+}
+
+.dropzone input[type='file'] {
+  max-width: 100%;
+  width: auto;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #1a1a1a;
@@ -138,6 +160,14 @@ button:focus-visible {
   }
   .looks {
     border: 3px solid #ffffff;
+  }
+  .dropzone {
+    background: #fafafa;
+    border-color: #888;
+    color: #111;
+  }
+  .dropzone.dragover {
+    background: #e8f3ff;
   }
   canvas {
     background-color: #ffffff;

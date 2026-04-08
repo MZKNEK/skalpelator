@@ -21,6 +21,7 @@
   let editMode = false;
   let localImage = false;
   let mirrorImage = false;
+  let dragOver = false;
 
   let starCntComp = 0;
   let selectedStarComp;
@@ -52,16 +53,49 @@
   }
 
   function onFileSelected(e) {
-  	let imageFile = e.target.files[0];
-    let reader = new FileReader();
-  	reader.onload = e => {
-      image = e.target.result;
+    const imageFile = e.target.files[0];
+    if (!imageFile) return;
+    readImageFile(imageFile);
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    dragOver = true;
+    e.dataTransfer.dropEffect = 'copy';
+  }
+
+  function handleDragLeave(e) {
+    e.preventDefault();
+    dragOver = false;
+  }
+
+  function handleFileDrop(e) {
+    e.preventDefault();
+    dragOver = false;
+    const imageFile = e.dataTransfer.files[0];
+    if (!imageFile) return;
+
+    const dt = new DataTransfer();
+    dt.items.add(imageFile);
+    fileinput.files = dt.files;
+    readImageFile(imageFile);
+  }
+
+  function readImageFile(imageFile) {
+    if (!imageFile.type.startsWith('image/')) {
+      alert('Proszę przeciągnąć plik obrazu JPG lub PNG.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      image = event.target.result;
       localImage = true;
-  	};
-  	reader.readAsDataURL(imageFile);
-    editMode = false;
-    minzoom = 1;
-    curzoom = 1;
+      editMode = false;
+      minzoom = 1;
+      curzoom = 1;
+    };
+    reader.readAsDataURL(imageFile);
   }
 
   function previewCrop(e) {
@@ -105,7 +139,17 @@
   </div>
 
   <div class="selector">
-    <label><div class="ltext">Lokalny plik:</div><input type="file" accept=".jpg, .jpeg, .png" on:change={(e)=>onFileSelected(e)} bind:this={fileinput} ></label><br/>
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div class="dropzone"
+      class:dragover={dragOver}
+      on:dragover={handleDragOver}
+      on:dragenter={handleDragOver}
+      on:dragleave={handleDragLeave}
+      on:drop={handleFileDrop}>
+      <div class="ltext">Lokalny plik:</div>
+      <input type="file" accept=".jpg, .jpeg, .png" on:change={onFileSelected} bind:this={fileinput} />
+    </div>
+    <br/>
     {#if !localImage}
       <label><div class="ltext">Link do obrazka:</div> <input bind:value={image} /> </label><br/>
     {/if}
