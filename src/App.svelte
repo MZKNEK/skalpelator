@@ -81,6 +81,17 @@
     readImageFile(imageFile);
   }
 
+  function openFilePicker(e) {
+    if (e.target instanceof HTMLInputElement) return;
+    fileinput?.click();
+  }
+
+  function handleDropzoneKeydown(e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    fileinput?.click();
+  }
+
   function readImageFile(imageFile) {
     if (!imageFile.type.startsWith('image/')) {
       alert('Proszę przeciągnąć plik obrazu JPG lub PNG.');
@@ -139,9 +150,12 @@
   </div>
 
   <div class="selector">
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div class="dropzone"
+      role="button"
+      tabindex="0"
       class:dragover={dragOver}
+      on:click={openFilePicker}
+      on:keydown={handleDropzoneKeydown}
       on:dragover={handleDragOver}
       on:dragenter={handleDragOver}
       on:dragleave={handleDragLeave}
