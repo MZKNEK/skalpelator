@@ -12,6 +12,8 @@
 
   let borders = [ 'SSS', 'SS', 'S', 'A', 'B', 'C', 'D', 'E' ]
 
+  const pwAssetsBaseUrl = 'https://raw.githubusercontent.com/MZKNEK/sanakan/master/src/Pictures/PW';
+
   let deres = [ 'Bodere', 'Dandere', 'Deredere', 'Kamidere', 'Kuudere', 'Mayadere',
     'Tsundere', 'Yandere', 'Raito', 'Yami', 'Yato' ]
 
@@ -100,13 +102,24 @@
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      image = event.target.result;
+      const result = event.target?.result;
+      if (typeof result !== 'string') return;
+
+      image = result;
       localImage = true;
       editMode = false;
       minzoom = 1;
       curzoom = 1;
     };
     reader.readAsDataURL(imageFile);
+  }
+
+  function getBorderImageUrl(border) {
+    return `${pwAssetsBaseUrl}/${border}.png`;
+  }
+
+  function getDereImageUrl(dere) {
+    return `${pwAssetsBaseUrl}/${dere}.png`;
   }
 
   function previewCrop(e) {
@@ -161,7 +174,7 @@
       on:dragleave={handleDragLeave}
       on:drop={handleFileDrop}>
       <div class="ltext">Lokalny plik:</div>
-      <input type="file" accept=".jpg, .jpeg, .png" on:change={onFileSelected} bind:this={fileinput} />
+      <input type="file" accept=".jpg, .jpeg, .png, .webp, .gif" on:change={onFileSelected} bind:this={fileinput} />
     </div>
     <br/>
     {#if !localImage}
@@ -187,8 +200,8 @@
       {#if customBorder}
         <img src={customBorder} class="border" alt="Border" />
       {:else}
-        <img src="/borders/{selectedBorder}.png" class="border" alt="Border" />
-        <img src="/dere/{selectedDere}.png" class="stats" alt="Dere" />
+        <img src={getBorderImageUrl(selectedBorder)} class="border" alt="Border" />
+        <img src={getDereImageUrl(selectedDere)} class="stats" alt="Dere" />
 
         {#if showStats}
           <img src={def} class="stats" alt="Defense" />
