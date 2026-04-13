@@ -7,13 +7,15 @@
 
   let starTypes = [ 'Full', 'Empty' ]
 
+  const pwStarsBaseUrl = 'https://raw.githubusercontent.com/MZKNEK/sanakan/master/src/Pictures/PW/stars';
+
   let starCnt = 0;
   let starShape = 'Star';
   let starColor = 'Blue';
   let starType = 'Full';
 
   function getName(e) {
-  	return `/star/${starType}/${starColors.indexOf(starColor)+1}_${starShapes.indexOf(starShape)+1}.png`;
+	return `${pwStarsBaseUrl}/${starType}/${starColors.indexOf(starColor)+1}_${starShapes.indexOf(starShape)+1}.png`;
   }
 
   let selectedValue = getName();
