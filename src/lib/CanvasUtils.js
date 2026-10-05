@@ -1,6 +1,4 @@
-import pica from 'pica'
-
-const picaResizer = pica()
+import { renderCrop } from './render.js'
 
 const createImage = (url) =>
   new Promise((resolve, reject) => {
@@ -19,46 +17,67 @@ const createBlobUrl = (canvas) =>
     }, 'image/png')
   })
 
-const setHighQualitySmoothing = (ctx) => {
-  ctx.imageSmoothingEnabled = true
-  ctx.imageSmoothingQuality = 'high'
+// the crop is made in a worker when the browser has one, so the page does not
+// stop while the real preview renders; otherwise on the page, with the same code
+let worker = null
+let workerFailed = false
+let lastId = 0
+const pending = new Map()
+
+function getWorker() {
+  if (worker || workerFailed) return worker
+  try {
+    worker = new Worker(new URL('./render.worker.js', import.meta.url), { type: 'module' })
+    worker.onmessage = (e) => {
+      const { id, img, error } = e.data
+      const job = pending.get(id)
+      pending.delete(id)
+      if (error) job?.reject(new Error(error))
+      else job?.resolve(img)
+    }
+    worker.onerror = () => {
+      workerFailed = true
+      worker = null
+      for (const job of pending.values()) job.fallback()
+      pending.clear()
+    }
+  } catch {
+    workerFailed = true
+  }
+  return worker
 }
 
-const resizeCanvas = (source, width, height) => {
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  const ctx = canvas.getContext('2d')
-  setHighQualitySmoothing(ctx)
-  ctx.drawImage(source, 0, 0, source.width, source.height, 0, 0, width, height)
-  return canvas
+function render(job) {
+  // the worker resolves addresses against its own file, so they go there absolute
+  job = { ...job, src: new URL(job.src, location.href).href, mask: job.mask && new URL(job.mask, location.href).href }
+  const w = getWorker()
+  if (!w) return renderCrop(job)
+  return new Promise((resolve, reject) => {
+    const id = ++lastId
+    pending.set(id, { resolve, reject, fallback: () => renderCrop(job).then(resolve, reject) })
+    w.postMessage({ id, job })
+  })
 }
 
-const progressiveResize = (image, width, height) => {
-  if (image.width <= width && image.height <= height) {
-    return resizeCanvas(image, width, height)
+/**
+ * The crop exactly as the cropper shows it, in % of the picture. The cropper's
+ * own numbers use the picture's size rounded to whole pixels, which shifts the
+ * crop by up to a pixel (more when zoomed in); the screen has the exact one.
+ * @param {HTMLElement} container - element holding the cropper
+ * @returns {{x: number, y: number, width: number, height: number} | null}
+ */
+export function cropOnScreen(container) {
+  const img = container?.querySelector('img')
+  const area = container?.querySelector('.cropperArea')
+  if (!img || !area) return null
+  const i = img.getBoundingClientRect(), a = area.getBoundingClientRect()
+  if (!i.width || !i.height) return null
+  return {
+    x: (a.x - i.x) / i.width * 100,
+    y: (a.y - i.y) / i.height * 100,
+    width: a.width / i.width * 100,
+    height: a.height / i.height * 100,
   }
-
-  let currentCanvas = document.createElement('canvas')
-  currentCanvas.width = image.width
-  currentCanvas.height = image.height
-  let currentCtx = currentCanvas.getContext('2d')
-  setHighQualitySmoothing(currentCtx)
-  currentCtx.drawImage(image, 0, 0)
-
-  while (currentCanvas.width * 0.5 > width || currentCanvas.height * 0.5 > height) {
-    const nextWidth = Math.max(width, Math.round(currentCanvas.width * 0.5))
-    const nextHeight = Math.max(height, Math.round(currentCanvas.height * 0.5))
-    const nextCanvas = document.createElement('canvas')
-    nextCanvas.width = nextWidth
-    nextCanvas.height = nextHeight
-    const nextCtx = nextCanvas.getContext('2d')
-    setHighQualitySmoothing(nextCtx)
-    nextCtx.drawImage(currentCanvas, 0, 0, currentCanvas.width, currentCanvas.height, 0, 0, nextWidth, nextHeight)
-    currentCanvas = nextCanvas
-  }
-
-  return resizeCanvas(currentCanvas, width, height)
 }
 
 export async function getMirroredImg(imageSrc) {
@@ -76,42 +95,17 @@ export async function getMirroredImg(imageSrc) {
   return createBlobUrl(canvas)
 }
 
-export async function getCroppedImg(imageSrc, pixelCrop) {
-  const image = await createImage(imageSrc)
+/**
+ * The picture of the card, 448x650, as the saved file and the real preview show it.
+ * @param {string} imageSrc - picture address
+ * @param {Object} percent - crop from svelte-easy-crop, in % of the picture
+ * @param {number} [sharpen] - extra sharpening, 0 = none
+ */
+export async function getCroppedImg(imageSrc, percent, sharpen = 0) {
+  const img = await render({ src: imageSrc, percent, width: 448, height: 650, sharpen })
   const canvas = document.createElement('canvas')
-  const ctx = canvas.getContext('2d')
-  setHighQualitySmoothing(ctx)
-
-  canvas.width = pixelCrop.width
-  canvas.height = pixelCrop.height
-
-  ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height)
-
-  if (canvas.width != 448 || canvas.height != 650)
-    return getResizedImg(canvas.toDataURL(), 448, 650)
-
+  canvas.width = img.width
+  canvas.height = img.height
+  canvas.getContext('2d').putImageData(img, 0, 0)
   return createBlobUrl(canvas)
-}
-
-export async function getResizedImg(imageSrc, width, height) {
-  const image = await createImage(imageSrc)
-
-  const sourceCanvas = document.createElement('canvas')
-  sourceCanvas.width = image.width
-  sourceCanvas.height = image.height
-  const sourceCtx = sourceCanvas.getContext('2d')
-  sourceCtx.drawImage(image, 0, 0)
-
-  const targetCanvas = document.createElement('canvas')
-  targetCanvas.width = width
-  targetCanvas.height = height
-
-  await picaResizer.resize(sourceCanvas, targetCanvas, {
-    quality: 3,
-    alpha: true,
-    unsharpAmount: 60,
-    unsharpRadius: 0.6,
-    unsharpThreshold: 0,
-  })
-  return createBlobUrl(targetCanvas)
 }
