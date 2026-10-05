@@ -1,5 +1,9 @@
 <script>
   import Stars from './lib/StarSettings.svelte';
+  import Segmented from './lib/Segmented.svelte';
+  import Switch from './lib/Switch.svelte';
+  import DropZone from './lib/DropZone.svelte';
+  import CardDrop from './lib/CardDrop.svelte';
 
   import Cropper from "svelte-easy-crop";
 	import { getCroppedImg, getMirroredImg, cropOnScreen } from "./lib/CanvasUtils.js"
@@ -22,14 +26,14 @@
   let editMode = false;
   let localImage = false;
   let mirrorImage = false;
-  let dragOver = false;
+  let fileName = '';
 
   let starCntComp = 0;
   let selectedStarComp;
   let selectedBorder =  'C';
   let selectedDere = 'Kamidere';
 
-  let pixelCrop, profilePicture, style, borderColor, fileinput, minzoom, curzoom;
+  let pixelCrop, profilePicture, style, borderColor, minzoom, curzoom;
 
   // the crop in % of the picture: unlike pixelCrop it is not rounded
   let cropPercent = null;
@@ -39,9 +43,9 @@
   // extra sharpening; without it the scaling keeps the picture as it is
   let sharpen = 0;
   const sharpenLevels = [
-    { value: 0, label: 'Brak (wierne skalowanie)' },
+    { value: 0, label: 'Brak', title: 'Wierne skalowanie, bez wyostrzania' },
     { value: 0.3, label: 'Lekkie' },
-    { value: 0.6, label: 'Średnie (jak dawniej)' },
+    { value: 0.6, label: 'Średnie', title: 'Jak dawniej' },
     { value: 1, label: 'Mocne' },
   ];
 
@@ -77,6 +81,10 @@
 
   const year = new Date().getFullYear();
 
+  // on narrow screens the card (481 px with its frame) is scaled down to fit
+  let winWidth = typeof window !== 'undefined' ? window.innerWidth : 1280;
+  $: fitScale = Math.min(1, (winWidth - 32) / 481);
+
   async function downloadImage() {
     try {
       const croppedImage = await getCroppedImg(image, currentCrop(), sharpen);
@@ -99,44 +107,10 @@
     }
   }
 
-  function onFileSelected(e) {
-    const imageFile = e.target.files[0];
-    if (!imageFile) return;
-    readImageFile(imageFile);
-  }
-
-  function handleDragOver(e) {
-    e.preventDefault();
-    dragOver = true;
-    e.dataTransfer.dropEffect = 'copy';
-  }
-
-  function handleDragLeave(e) {
-    e.preventDefault();
-    dragOver = false;
-  }
-
-  function handleFileDrop(e) {
-    e.preventDefault();
-    dragOver = false;
-    const imageFile = e.dataTransfer.files[0];
-    if (!imageFile) return;
-
-    const dt = new DataTransfer();
-    dt.items.add(imageFile);
-    fileinput.files = dt.files;
-    readImageFile(imageFile);
-  }
-
-  function openFilePicker(e) {
-    if (e.target instanceof HTMLInputElement) return;
-    fileinput?.click();
-  }
-
-  function handleDropzoneKeydown(e) {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    e.preventDefault();
-    fileinput?.click();
+  // a file from the drop zone or dropped onto the card
+  function onFile(e) {
+    fileName = e.detail.name;
+    readImageFile(e.detail);
   }
 
   function readImageFile(imageFile) {
@@ -190,6 +164,8 @@
 	}
 </script>
 
+<svelte:window bind:innerWidth={winWidth} />
+
 <header class="page-head">
   <div class="page-top">
     <a class="back hud-corners" href="https://sanakan.pl/" title="Strona główna">&larr; Sanakan</a>
@@ -199,127 +175,94 @@
 </header>
 
 <main class="content">
+  <div class="app-layout">
+    <div class="panel">
+      <section class="group">
+        <h2 class="group-title"><i>01</i>Karta</h2>
+        <div class="field"><span class="label">Ramka</span><Segmented bind:value={selectedBorder} options={borders} label="Ramka" /></div>
+        <label class="field"><span class="label">Dere</span><select bind:value={selectedDere}>
+          {#each deres as value}<option {value}>{value}</option>{/each}
+        </select></label>
+        <Stars bind:value={selectedStarComp} bind:count={starCntComp}/>
+        <label class="field"><span class="label">Link do ramki</span><input bind:value={customBorder} placeholder="adres własnej ramki (opcjonalnie)" /></label>
+        <Switch label="Pokaż statystyki" bind:checked={showStats} />
+      </section>
 
-  <div class="selector">
-    <label><div class="stext">Ramka:</div> <select bind:value={selectedBorder} >
-      {#each borders as value}<option {value}>{value}</option>{/each}
-    </select></label>
+      <section class="group">
+        <h2 class="group-title"><i>02</i>Obraz</h2>
+        <DropZone bind:fileName on:file={onFile} />
+        {#if !localImage}
+          <label class="field"><span class="label">Link do obrazka</span><input bind:value={image} /></label>
+        {/if}
+        <Switch label="Odbicie lustrzane" bind:checked={mirrorImage} on:change={() => toMirrorImage()} />
+      </section>
 
-    <label><div class="stext">Dere:</div> <select class="nselect" bind:value={selectedDere} >
-      {#each deres as value}<option {value}>{value}</option>{/each}
-    </select></label>
-  </div>
-
-  <div class="selector">
-    <Stars bind:value={selectedStarComp} bind:count={starCntComp}/>
-  </div>
-
-  <div class="selector fields">
-    <div class="dropzone"
-      role="button"
-      tabindex="0"
-      class:dragover={dragOver}
-      on:click={openFilePicker}
-      on:keydown={handleDropzoneKeydown}
-      on:dragover={handleDragOver}
-      on:dragenter={handleDragOver}
-      on:dragleave={handleDragLeave}
-      on:drop={handleFileDrop}>
-      <div class="ltext">Lokalny plik:</div>
-      <input type="file" accept=".jpg, .jpeg, .png, .webp, .gif" on:change={onFileSelected} bind:this={fileinput} />
+      <section class="group">
+        <h2 class="group-title"><i>03</i>Edycja</h2>
+        <Switch label="Tryb edycji" bind:checked={editMode} on:change={() => borderColor = ""} />
+        {#if editMode}
+          <div class="field"><span class="label">Wyostrzenie</span><Segmented bind:value={sharpen} options={sharpenLevels} label="Wyostrzenie" words /></div>
+          <Switch label="Podgląd wyniku" bind:checked={realPreview}
+            title="Po puszczeniu kadru pokazuje go przeskalowanego dokładnie tak, jak w zapisanym pliku" />
+        {/if}
+      </section>
     </div>
-    {#if !localImage}
-      <label><div class="ltext">Link do obrazka:</div> <input bind:value={image} /> </label>
-    {/if}
-    <label><div class="ltext">Link do ramki:</div> <input bind:value={customBorder} /> </label>
-    <label><div class="ltext">Pokaż statystyki:</div> <input type="checkbox" bind:checked={showStats} /> </label>
-    <label class="mirror"><div class="ltext">Odbicie lustrzane:</div> <input type="checkbox" bind:checked={mirrorImage} on:change={() => toMirrorImage()}/> </label>
-    <label class="exp"><div class="ltext">Tryb edycji:</div> <input type="checkbox" bind:checked={editMode} on:change={() => borderColor = ""} /> </label>
-    {#if editMode}
-      <label><div class="ltext">Wyostrzenie:</div> <select bind:value={sharpen}>
-        {#each sharpenLevels as level}<option value={level.value}>{level.label}</option>{/each}
-      </select></label>
-      <label title="Po puszczeniu kadru pokazuje go przeskalowanego dokładnie tak, jak w zapisanym pliku"><div class="ltext">Podgląd wyniku:</div> <input type="checkbox" bind:checked={realPreview} /> </label>
-    {/if}
-  </div>
-  <div class="looks" style="border-color: {borderColor};" >
-    <img src={cardboard} class="cardboard" alt="Cardboard" />
-    {#if editMode}
-      <div class="wrapper">
-        <img bind:this={profilePicture} src={image} class="wrapper_img" alt="Scalpel" style={style}/>
-      </div>
-      <div class="canva" bind:this={canvaEl}>
-        <Cropper {image} showGrid={false} crop={{x:0, y:0}} bind:zoom={curzoom} bind:minZoom={minzoom} maxZoom={5} zoomSpeed={0.05} cropSize={{width:448, height:650}} restrictPosition={true} on:cropcomplete={previewCrop} />
-      </div>
-      {#if realPreview && previewUrl}
-        <img src={previewUrl} class="real" class:stale={previewStale} alt="" />
+
+    <div class="card-col">
+      <CardDrop on:file={onFile}>
+        <div class="card-fit" style="width: {481 * fitScale}px; height: {673 * fitScale}px;">
+        <div class="looks" style="border-color: {borderColor}; transform: scale({fitScale});" >
+          <img src={cardboard} class="cardboard" alt="Cardboard" />
+          {#if editMode}
+            <div class="wrapper">
+              <img bind:this={profilePicture} src={image} class="wrapper_img" alt="Scalpel" style={style}/>
+            </div>
+            <div class="canva" class:under-real={realPreview && previewUrl && !previewStale} bind:this={canvaEl}>
+              <Cropper {image} showGrid={false} crop={{x:0, y:0}} bind:zoom={curzoom} bind:minZoom={minzoom} maxZoom={5} zoomSpeed={0.05} cropSize={{width:448, height:650}} restrictPosition={true} on:cropcomplete={previewCrop} />
+            </div>
+            {#if realPreview && previewUrl}
+              <img src={previewUrl} class="real" class:stale={previewStale} alt="" />
+            {/if}
+          {:else}
+            <img src={image} class="scalp" alt="Scalpel" />
+          {/if}
+            {#if customBorder}
+              <img src={customBorder} class="border" alt="Border" />
+            {:else}
+              <img src={getBorderImageUrl(selectedBorder)} class="border" alt="Border" />
+              <img src={getDereImageUrl(selectedDere)} class="stats" alt="Dere" />
+
+              {#if showStats}
+                <img src={def} class="stats" alt="Defense" />
+                <img src={fire} class="stats" alt="Attack" />
+                <img src={health} class="stats" alt="Health" />
+              {/if}
+
+              {#if starCntComp > 0}
+                {#each {length: starCntComp} as _, i}
+                  <img src={selectedStarComp} class="star" alt="Star" style="left: {239 - (19 * starCntComp) + (38 * i)}px;"/>
+                {/each}
+              {/if}
+
+            {/if}
+        </div>
+        </div>
+      </CardDrop>
+      {#if editMode}
+        <div class="card-actions">
+          <button type="button" class="btn-go" on:click={async () => {downloadImage()}}>Zapisz</button>
+        </div>
       {/if}
-    {:else}
-      <img src={image} class="scalp" alt="Scalpel" />
-    {/if}
-      {#if customBorder}
-        <img src={customBorder} class="border" alt="Border" />
-      {:else}
-        <img src={getBorderImageUrl(selectedBorder)} class="border" alt="Border" />
-        <img src={getDereImageUrl(selectedDere)} class="stats" alt="Dere" />
-
-        {#if showStats}
-          <img src={def} class="stats" alt="Defense" />
-          <img src={fire} class="stats" alt="Attack" />
-          <img src={health} class="stats" alt="Health" />
-        {/if}
-
-        {#if starCntComp > 0}
-          {#each {length: starCntComp} as _, i}
-            <img src={selectedStarComp} class="star" alt="Star" style="left: {239 - (19 * starCntComp) + (38 * i)}px;"/>
-          {/each}
-        {/if}
-
-      {/if}
+    </div>
   </div>
-  {#if editMode}
-  <div class="editor">
-    <button type="button" class="btn-go" on:click={async () => {downloadImage()}}>Zapisz</button>
-  </div>
-  {/if}
 </main>
 
 <footer class="site-foot"><span>&copy; 2017&ndash;{year} Sniku</span><i aria-hidden="true">&middot;</i><a href="https://sanakan.pl/privacy/">Prywatność</a></footer>
 
 <style>
-  .ltext {
-    display: inline-block;
-    width: 130px;
-    text-align: left;
-  }
-  .stext {
-    display: inline-block;
-    padding-left: 0.5em;
-    padding-right: 0.2em;
-  }
-  /* one option per row: the name on the left, the field filling the rest */
-  .fields label {
-    display: flex;
-    align-items: center;
-    gap: 0.5em;
-    margin-top: 6px;
-    text-align: left;
-  }
-  .fields label .ltext {
-    flex: 0 0 130px;
-  }
-  .fields label input:not([type="checkbox"]) {
-    flex: 1;
-    min-width: 0;
-  }
-  .fields .dropzone {
-    margin-bottom: 8px;
-  }
-  .fields label input[type="checkbox"] {
-    margin: 0;
-  }
   .looks {
     position: relative;
+    transform-origin: top left;
     width: 475px;
     height: 667px;
   }
@@ -346,9 +289,6 @@
     overflow: hidden;
     z-index: -1;
   }
-  .editor {
-    padding: 1em 0.5em 0.5em;
-  }
   .wrapper_img {
     position: absolute;
   }
@@ -365,6 +305,11 @@
   }
   .real.stale {
     visibility: hidden;
+  }
+  /* under the real preview the cropper's own picture would show through
+     transparent parts; it stays there, unseen, for the mouse */
+  .canva.under-real :global(img) {
+    opacity: 0;
   }
   .scalp {
     position: absolute;
@@ -392,9 +337,5 @@
     z-index: 3;
     top: 0px;
     left: 0px;
-  }
-  .selector {
-    width: 475px;
-    padding-bottom: 1em;
   }
 </style>

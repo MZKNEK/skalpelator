@@ -1,4 +1,6 @@
 <script>
+  import Segmented from './Segmented.svelte';
+
   let starCount = [ 0, 1, 2, 3, 4, 5, 6 ]
 
   let starColors = [ 'Bronze', 'Silver', 'Gold', 'Blue', 'Green', 'Red', 'Purple', 'Black', 'White', 'Candy', 'Vapor', 'Neon', 'Rainbow' ]
@@ -14,36 +16,23 @@
   let starColor = 'Blue';
   let starType = 'Full';
 
-  function getName(e) {
-	return `${pwStarsBaseUrl}/${starType}/${starColors.indexOf(starColor)+1}_${starShapes.indexOf(starShape)+1}.png`;
-  }
-
-  let selectedValue = getName();
+  let selectedValue;
+  $: selectedValue = `${pwStarsBaseUrl}/${starType}/${starColors.indexOf(starColor)+1}_${starShapes.indexOf(starShape)+1}.png`;
 
   export { selectedValue as value };
   export { starCnt as count };
 </script>
 
-<label><div class="stext">Gwiazdki:</div> <select class="nselect" bind:value={starCnt} on:change={() => selectedValue = getName() }>
-  {#each starCount as value}<option {value}>{value}</option>{/each}
-</select></label>
+<div class="field"><span class="label">Gwiazdki</span><Segmented bind:value={starCnt} options={starCount} label="Gwiazdki" /></div>
 
-<label><div class="stext">Kształt:</div> <select class="nselect" bind:value={starShape} on:change={() => selectedValue = getName() }>
-  {#each starShapes as value}<option {value}>{value}</option>{/each}
-</select></label>
+{#if starCnt > 0}
+  <label class="field"><span class="label">Kształt</span><select bind:value={starShape}>
+    {#each starShapes as value}<option {value}>{value}</option>{/each}
+  </select></label>
 
-<label><div class="stext">Kolor:</div> <select class="nselect" bind:value={starColor} on:change={() => selectedValue = getName() }>
-  {#each starColors as value}<option {value}>{value}</option>{/each}
-</select></label>
+  <label class="field"><span class="label">Kolor</span><select bind:value={starColor}>
+    {#each starColors as value}<option {value}>{value}</option>{/each}
+  </select></label>
 
-<label><div class="stext">Typ:</div> <select class="nselect" bind:value={starType} on:change={() => selectedValue = getName() }>
-  {#each starTypes as value}<option {value}>{value}</option>{/each}
-</select></label>
-
-<style>
-  .stext {
-    display: inline-block;
-    padding-left: 0.5em;
-    padding-right: 0.2em;
-  }
-</style>
+  <div class="field"><span class="label">Typ</span><Segmented bind:value={starType} options={starTypes} label="Typ gwiazdek" words /></div>
+{/if}
