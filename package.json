@@ -17,7 +17,6 @@
     "vite": "^5.1.4"
   },
   "dependencies": {
-    "pica": "^9.0.1",
     "svelte-easy-crop": "^2.0.3"
   }
 }
