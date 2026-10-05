@@ -4,6 +4,8 @@
   import Switch from './lib/Switch.svelte';
   import DropZone from './lib/DropZone.svelte';
   import CardDrop from './lib/CardDrop.svelte';
+  import Select from './lib/Select.svelte';
+  import LinkField from './lib/LinkField.svelte';
 
   import Cropper from "svelte-easy-crop";
 	import { getCroppedImg, getMirroredImg, cropOnScreen } from "./lib/CanvasUtils.js"
@@ -19,6 +21,9 @@
 
   let deres = [ 'Bodere', 'Dandere', 'Deredere', 'Kamidere', 'Kuudere', 'Mayadere',
     'Tsundere', 'Yandere', 'Raito', 'Yami', 'Yato' ]
+
+  // the dere's badge, cut out of the bot's picture of it (32x34 px at 221,628), in a 22 px box
+  const dereIcon = (dere) => `background-image: url(${pwAssetsBaseUrl}/${dere}.png); background-size: 307.4px 431.6px; background-position: -142.4px -406.4px;`;
 
   let image = "https://sanakan.pl/i/ss/fga432a.png";
   let customBorder = "";
@@ -180,11 +185,9 @@
       <section class="group">
         <h2 class="group-title"><i>01</i>Karta</h2>
         <div class="field"><span class="label">Ramka</span><Segmented bind:value={selectedBorder} options={borders} label="Ramka" /></div>
-        <label class="field"><span class="label">Dere</span><select bind:value={selectedDere}>
-          {#each deres as value}<option {value}>{value}</option>{/each}
-        </select></label>
+        <div class="field"><span class="label">Dere</span><Select bind:value={selectedDere} options={deres} label="Dere" icon={dereIcon} /></div>
         <Stars bind:value={selectedStarComp} bind:count={starCntComp}/>
-        <label class="field"><span class="label">Link do ramki</span><input bind:value={customBorder} placeholder="adres własnej ramki (opcjonalnie)" /></label>
+        <div class="field"><span class="label">Link do ramki</span><LinkField bind:value={customBorder} label="Link do ramki" placeholder="adres własnej ramki (opcjonalnie)" /></div>
         <Switch label="Pokaż statystyki" bind:checked={showStats} />
       </section>
 
@@ -192,7 +195,7 @@
         <h2 class="group-title"><i>02</i>Obraz</h2>
         <DropZone bind:fileName on:file={onFile} />
         {#if !localImage}
-          <label class="field"><span class="label">Link do obrazka</span><input bind:value={image} /></label>
+          <div class="field"><span class="label">Link do obrazka</span><LinkField bind:value={image} label="Link do obrazka" placeholder="https://…" /></div>
         {/if}
         <Switch label="Odbicie lustrzane" bind:checked={mirrorImage} on:change={() => toMirrorImage()} />
       </section>
