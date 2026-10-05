@@ -17,11 +17,14 @@
   let starColor = 'Blue';
   let starType = 'Full';
 
-  // the star of a shape and colour, as the bot draws it
-  const starIcon = (shape, color, type) => `background-image: url(${pwStarsBaseUrl}/${type}/${starColors.indexOf(color)+1}_${starShapes.indexOf(shape)+1}.png);`;
+  // the star of a shape and colour, as the bot draws it; Rainbow is a star of
+  // its own, the last one, with no shapes: always its one picture (13_1)
+  const starFile = (shape, color, type) =>
+    `${pwStarsBaseUrl}/${type}/${starColors.indexOf(color)+1}_${color === 'Rainbow' ? 1 : starShapes.indexOf(shape)+1}.png`;
+  const starIcon = (shape, color, type) => `background-image: url(${starFile(shape, color, type)});`;
 
   let selectedValue;
-  $: selectedValue = `${pwStarsBaseUrl}/${starType}/${starColors.indexOf(starColor)+1}_${starShapes.indexOf(starShape)+1}.png`;
+  $: selectedValue = starFile(starShape, starColor, starType);
 
   export { selectedValue as value };
   export { starCnt as count };
@@ -30,11 +33,13 @@
 <div class="field"><span class="label">Gwiazdki</span><Segmented bind:value={starCnt} options={starCount} label="Gwiazdki" /></div>
 
 {#if starCnt > 0}
-  <div class="field"><span class="label">Kształt</span><Select bind:value={starShape} options={starShapes} label="Kształt gwiazdek" layout="grid"
-    icon={(shape) => starIcon(shape, starColor, starType)} /></div>
-
   <div class="field"><span class="label">Kolor</span><Select bind:value={starColor} options={starColors} label="Kolor gwiazdek" layout="grid"
     icon={(color) => starIcon(starShape, color, starType)} /></div>
+
+  {#if starColor !== 'Rainbow'}
+    <div class="field"><span class="label">Kształt</span><Select bind:value={starShape} options={starShapes} label="Kształt gwiazdek" layout="grid"
+      icon={(shape) => starIcon(shape, starColor, starType)} /></div>
+  {/if}
 
   <div class="field"><span class="label">Typ</span><Segmented bind:value={starType} options={starTypes} label="Typ gwiazdek" words /></div>
 {/if}
